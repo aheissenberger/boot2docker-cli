@@ -15,15 +15,19 @@ func logf(fmt string, v ...interface{}) {
 }
 
 // Return the value of an ENV var, or the fallback value if the ENV var is empty/undefined.
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
+func getenvSys(key, fallback string, mapping func(string) string) string {
+	if v := mapping(key); v != "" {
 		return v
 	}
-	return fallback
+	return fallback	
+}
+
+var getenv = func(key, fallback string) string {
+	return getenvSys(key, fallback, os.Getenv )
 }
 
 // Check if the connection to tcp://addr is readable.
-func read(addr string) error {
+var read = func(addr string) error {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
@@ -36,7 +40,7 @@ func read(addr string) error {
 }
 
 // Check if an addr can be successfully connected.
-func ping(addr string) bool {
+var ping = func(addr string) bool {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return false
@@ -46,7 +50,7 @@ func ping(addr string) bool {
 }
 
 // Download the url to the dest path.
-func download(dest, url string) error {
+var download = func(dest, url string) error {
 	rsp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -73,7 +77,7 @@ func download(dest, url string) error {
 }
 
 // Get latest release tag name (e.g. "v0.6.0") from a repo on GitHub.
-func getLatestReleaseName(url string) (string, error) {
+var getLatestReleaseName = func(url string) (string, error) {
 	rsp, err := http.Get(url)
 	if err != nil {
 		return "", err
